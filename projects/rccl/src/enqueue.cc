@@ -3431,7 +3431,6 @@ static ncclResult_t rmaTaskAppend(
     }
   }
 
-#ifdef RCCL_RMA_CU_PATH_ENABLED
   // Check if RMA CE needs initialization
   if (!comm->rmaState.rmaCeState.initialized && ncclIntruQueueEmpty(&comm->rmaCeInitTaskQueue)) {
     struct ncclRmaCeInitTask* ceTask;
@@ -3440,7 +3439,6 @@ static ncclResult_t rmaTaskAppend(
     ncclIntruQueueEnqueue(&comm->rmaCeInitTaskQueue, ceTask);
     ncclGroupCommJoin(comm, ncclGroupTaskTypeSymRegister);
   }
-#endif
 
   // Must be in thread local group before tasks can be alloc'd in `comm->memScoped`.
   ncclGroupCommJoin(info->comm, ncclGroupTaskTypeCollective);
