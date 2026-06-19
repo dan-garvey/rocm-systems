@@ -520,6 +520,11 @@ namespace elf {
       size_t addString1(const std::string& s) override;
       const char* getString(size_t ndx) override;
       size_t getStringIndex(const char* name) override;
+      // Bounded string read: returns an empty string for an out-of-range index
+      // and never reads past the end of the backing buffer, so a crafted
+      // (out-of-range or non-NUL-terminated) sh_name/st_name cannot cause a
+      // std::string(nullptr) or an out-of-bounds read.
+      std::string getStringSafe(size_t ndx) const;
 
       uint16_t getSectionIndex() const override { return GElfSection::getSectionIndex(); }
       uint32_t type() const override { return GElfSection::type(); }
@@ -768,7 +773,7 @@ namespace elf {
       GElfSegment* segment(size_t i) override { return segments[i].get(); }
       Segment* segmentByVAddr(uint64_t vaddr) override;
       size_t sectionCount() override { return sections.size(); }
-      GElfSection* section(size_t i) override { return sections[i].get(); }
+      GElfSection* section(size_t i) override { return i < sections.size() ? sections[i].get() : nullptr; }
       Section* sectionByVAddr(uint64_t vaddr) override;
       uint16_t machine() const;
       uint16_t etype() const;
@@ -928,7 +933,9 @@ namespace elf {
 
     std::string GElfSection::Name() const
     {
-      return std::string(elf->shstrtab()->getString(hdr.sh_name));
+      GElfStringTable* sht = elf->shstrtab();
+      if (!sht) { return std::string(); }
+      return sht->getStringSafe(hdr.sh_name);
     }
 
     bool GElfSection::updateAddr(uint64_t addr)
@@ -1098,6 +1105,18 @@ namespace elf {
       return nullptr;
     }
 
+    std::string GElfStringTable::getStringSafe(size_t ndx) const
+    {
+      if (data0.has(ndx)) {
+        const char* s = data0.get<const char*>(ndx);
+        return std::string(s, strnlen(s, data0.size() - ndx));
+      } else if (data.has(ndx)) {
+        const char* s = data.get<const char*>(ndx);
+        return std::string(s, strnlen(s, data.size() - ndx));
+      }
+      return std::string();
+    }
+
     size_t GElfStringTable::getStringIndex(const char* s)
     {
       if (data0.has(s)) {
@@ -1138,7 +1157,10 @@ namespace elf {
 
     std::string GElfSymbol::name()
     {
-      return symtab->strtab->getString(Sym()->st_name);
+      // st_name and the referenced string table (sh_link) are attacker-
+      // controlled; guard against a missing string table and bound the read.
+      if (!symtab || !symtab->strtab) { return std::string(); }
+      return symtab->strtab->getStringSafe(Sym()->st_name);
     }
 
     GElfSymbolTable::GElfSymbolTable(GElfImage* elf)
@@ -1157,7 +1179,10 @@ namespace elf {
 
     bool GElfSymbolTable::pullData()
     {
+      // sh_link selects the associated string table; reject a symbol table that
+      // references an out-of-range / non-string-table section.
       strtab = elf->getStringTable(hdr.sh_link);
+      if (!strtab) { return false; }
       for (size_t i = 0; i < data0.size() / sizeof(GElf_Sym); ++i) {
         symbols.push_back(std::unique_ptr<GElfSymbol>(new GElfSymbol(this, data0, i * sizeof(GElf_Sym))));
       }
@@ -1306,8 +1331,11 @@ namespace elf {
 
     bool GElfRelocationSection::pullData()
     {
+      // sh_info / sh_link are attacker-controlled section indices; reject a
+      // relocation section that references missing target or symbol sections.
       section = elf->section(hdr.sh_info);
       symtab = elf->getReferencedSymbolTable(hdr.sh_link);
+      if (!section || !symtab) { return false; }
       Elf_Scn *lScn = elf_getscn(elf->e, ndxscn);
       assert(lScn);
       Elf_Data *lData = elf_getdata(lScn, nullptr);
@@ -1629,6 +1657,9 @@ namespace elf {
 
     GElfStringTable* GElfImage::getStringTable(uint16_t index)
     {
+      // sh_link is attacker-controlled; reject an out-of-range section index
+      // rather than indexing the vector out of bounds.
+      if (index >= sections.size()) { return nullptr; }
       return static_cast<GElfStringTable*>(sections[index].get());
     }
 
