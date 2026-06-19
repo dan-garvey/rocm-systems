@@ -145,6 +145,7 @@ declare -A TEST_NUMBERS=(
   ["host_int_amo_fcswap"]="128"
   ["host_amo_all_pes"]="129"
   ["host_amo_self"]="130"
+  ["broadcast_wave"]="131"
 )
 
 # Detect which runtime to use
@@ -702,6 +703,8 @@ TestColl() {
   ExecTest  "fcollect"         2       1            64        32768
 
   ExecTest  "teamreduction"    2       1            64        32768
+
+  ExecTest  "broadcast_wave"   2       1            64        32768
 }
 
 TestOnStream() {
