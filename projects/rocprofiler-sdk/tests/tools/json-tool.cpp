@@ -575,24 +575,24 @@ struct profile_counting_record
     bool operator!=(rocprofiler_record_counter_t rhs) const { return !(*this == rhs); }
 };
 
-auto counter_info                  = std::deque<rocprofiler_counter_info_v0_t>{};
-auto runtime_init_cb_records       = std::deque<runtime_init_callback_record_t>{};
-auto code_object_records           = std::deque<code_object_callback_record_t>{};
-auto kernel_symbol_records         = std::deque<kernel_symbol_callback_record_t>{};
-auto host_function_records         = std::deque<host_function_callback_record_t>{};
-auto hsa_api_cb_records            = std::deque<hsa_api_callback_record_t>{};
-auto marker_api_cb_records         = std::deque<marker_api_callback_record_t>{};
-auto counter_collection_bf_records = std::deque<profile_counting_record>{};
+auto counter_info                      = std::deque<rocprofiler_counter_info_v0_t>{};
+auto runtime_init_cb_records           = std::deque<runtime_init_callback_record_t>{};
+auto code_object_records               = std::deque<code_object_callback_record_t>{};
+auto kernel_symbol_records             = std::deque<kernel_symbol_callback_record_t>{};
+auto host_function_records             = std::deque<host_function_callback_record_t>{};
+auto hsa_api_cb_records                = std::deque<hsa_api_callback_record_t>{};
+auto marker_api_cb_records             = std::deque<marker_api_callback_record_t>{};
+auto counter_collection_bf_records     = std::deque<profile_counting_record>{};
 auto counter_collection_pending_values = std::deque<rocprofiler_record_counter_t>{};
-auto hip_api_cb_records            = std::deque<hip_api_callback_record_t>{};
-auto scratch_memory_cb_records     = std::deque<scratch_memory_callback_record_t>{};
-auto kernel_dispatch_cb_records    = std::deque<kernel_dispatch_callback_record_t>{};
-auto memory_copy_cb_records        = std::deque<memory_copy_callback_record_t>{};
-auto memory_allocation_cb_records  = std::deque<memory_allocation_callback_record_t>{};
-auto rccl_api_cb_records           = std::deque<rccl_api_callback_record_t>{};
-auto rocdecode_api_cb_records      = std::deque<rocdecode_api_callback_record_t>{};
-auto rocjpeg_api_cb_records        = std::deque<rocjpeg_api_callback_record_t>{};
-auto ompt_cb_records               = std::deque<ompt_callback_record_t>{};
+auto hip_api_cb_records                = std::deque<hip_api_callback_record_t>{};
+auto scratch_memory_cb_records         = std::deque<scratch_memory_callback_record_t>{};
+auto kernel_dispatch_cb_records        = std::deque<kernel_dispatch_callback_record_t>{};
+auto memory_copy_cb_records            = std::deque<memory_copy_callback_record_t>{};
+auto memory_allocation_cb_records      = std::deque<memory_allocation_callback_record_t>{};
+auto rccl_api_cb_records               = std::deque<rccl_api_callback_record_t>{};
+auto rocdecode_api_cb_records          = std::deque<rocdecode_api_callback_record_t>{};
+auto rocjpeg_api_cb_records            = std::deque<rocjpeg_api_callback_record_t>{};
+auto ompt_cb_records                   = std::deque<ompt_callback_record_t>{};
 
 int
 set_external_correlation_id(rocprofiler_thread_id_t                            thr_id,
@@ -1161,10 +1161,10 @@ tool_tracing_buffered(rocprofiler_context_id_t /*context*/,
         {
             auto* profiler_record = static_cast<rocprofiler_record_counter_t*>(header->payload);
             auto  ritr            = std::find_if(counter_collection_bf_records.rbegin(),
-                                      counter_collection_bf_records.rend(),
-                                      [profiler_record](const profile_counting_record& itr) {
-                                          return itr == *profiler_record;
-                                      });
+                                     counter_collection_bf_records.rend(),
+                                     [profiler_record](const profile_counting_record& itr) {
+                                         return itr == *profiler_record;
+                                     });
             // The dispatch header for this value may not have been delivered yet because the
             // SDK flushes multiple internal buffers that can complete out of order. Park the
             // value and attach it when the header arrives rather than failing.
