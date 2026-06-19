@@ -32,6 +32,7 @@ FlatLoadU8Vflat::FlatLoadU8Vflat(const MachineInst *inst)
   num_src_ = 1;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatLoadU8Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -57,6 +58,7 @@ FlatLoadI8Vflat::FlatLoadI8Vflat(const MachineInst *inst)
   num_src_ = 1;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatLoadI8Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -83,6 +85,7 @@ FlatLoadU16Vflat::FlatLoadU16Vflat(const MachineInst *inst)
   num_src_ = 1;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatLoadU16Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -108,6 +111,7 @@ FlatLoadI16Vflat::FlatLoadI16Vflat(const MachineInst *inst)
   num_src_ = 1;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatLoadI16Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -134,6 +138,7 @@ FlatLoadB32Vflat::FlatLoadB32Vflat(const MachineInst *inst)
   num_src_ = 1;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatLoadB32Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -159,6 +164,7 @@ FlatLoadB64Vflat::FlatLoadB64Vflat(const MachineInst *inst)
   num_src_ = 1;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatLoadB64Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -184,6 +190,7 @@ FlatLoadB96Vflat::FlatLoadB96Vflat(const MachineInst *inst)
   num_src_ = 1;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatLoadB96Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -209,6 +216,7 @@ FlatLoadB128Vflat::FlatLoadB128Vflat(const MachineInst *inst)
   num_src_ = 1;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatLoadB128Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -234,6 +242,7 @@ FlatStoreB8Vflat::FlatStoreB8Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 0;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatStoreB8Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -268,6 +277,7 @@ FlatStoreB16Vflat::FlatStoreB16Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 0;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatStoreB16Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -302,6 +312,7 @@ FlatStoreB32Vflat::FlatStoreB32Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 0;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatStoreB32Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -336,6 +347,7 @@ FlatStoreB64Vflat::FlatStoreB64Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 0;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatStoreB64Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -372,6 +384,7 @@ FlatStoreB96Vflat::FlatStoreB96Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 0;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatStoreB96Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -410,6 +423,7 @@ FlatStoreB128Vflat::FlatStoreB128Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 0;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatStoreB128Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -450,6 +464,7 @@ FlatLoadD16U8Vflat::FlatLoadD16U8Vflat(const MachineInst *inst)
   num_src_ = 1;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatLoadD16U8Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -476,6 +491,7 @@ FlatLoadD16I8Vflat::FlatLoadD16I8Vflat(const MachineInst *inst)
   num_src_ = 1;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatLoadD16I8Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -503,6 +519,7 @@ FlatLoadD16B16Vflat::FlatLoadD16B16Vflat(const MachineInst *inst)
   num_src_ = 1;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatLoadD16B16Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -529,6 +546,7 @@ FlatLoadD16HiU8Vflat::FlatLoadD16HiU8Vflat(const MachineInst *inst)
   num_src_ = 1;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatLoadD16HiU8Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -555,6 +573,7 @@ FlatLoadD16HiI8Vflat::FlatLoadD16HiI8Vflat(const MachineInst *inst)
   num_src_ = 1;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatLoadD16HiI8Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -582,6 +601,7 @@ FlatLoadD16HiB16Vflat::FlatLoadD16HiB16Vflat(const MachineInst *inst)
   num_src_ = 1;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatLoadD16HiB16Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -608,6 +628,7 @@ FlatStoreD16HiB8Vflat::FlatStoreD16HiB8Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 0;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatStoreD16HiB8Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -643,6 +664,7 @@ FlatStoreD16HiB16Vflat::FlatStoreD16HiB16Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 0;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatStoreD16HiB16Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -680,6 +702,7 @@ FlatAtomicSwapB32Vflat::FlatAtomicSwapB32Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicSwapB32Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -718,6 +741,7 @@ FlatAtomicCmpswapB32Vflat::FlatAtomicCmpswapB32Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicCmpswapB32Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -758,6 +782,7 @@ FlatAtomicAddU32Vflat::FlatAtomicAddU32Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicAddU32Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -796,6 +821,7 @@ FlatAtomicSubU32Vflat::FlatAtomicSubU32Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicSubU32Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -834,6 +860,7 @@ FlatAtomicSubClampU32Vflat::FlatAtomicSubClampU32Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicSubClampU32Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -872,6 +899,7 @@ FlatAtomicMinI32Vflat::FlatAtomicMinI32Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicMinI32Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -910,6 +938,7 @@ FlatAtomicMinU32Vflat::FlatAtomicMinU32Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicMinU32Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -948,6 +977,7 @@ FlatAtomicMaxI32Vflat::FlatAtomicMaxI32Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicMaxI32Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -986,6 +1016,7 @@ FlatAtomicMaxU32Vflat::FlatAtomicMaxU32Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicMaxU32Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1024,6 +1055,7 @@ FlatAtomicAndB32Vflat::FlatAtomicAndB32Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicAndB32Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1062,6 +1094,7 @@ FlatAtomicOrB32Vflat::FlatAtomicOrB32Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicOrB32Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1100,6 +1133,7 @@ FlatAtomicXorB32Vflat::FlatAtomicXorB32Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicXorB32Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1138,6 +1172,7 @@ FlatAtomicIncU32Vflat::FlatAtomicIncU32Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicIncU32Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1176,6 +1211,7 @@ FlatAtomicDecU32Vflat::FlatAtomicDecU32Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicDecU32Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1214,6 +1250,7 @@ FlatAtomicSwapB64Vflat::FlatAtomicSwapB64Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicSwapB64Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1252,6 +1289,7 @@ FlatAtomicCmpswapB64Vflat::FlatAtomicCmpswapB64Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicCmpswapB64Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1292,6 +1330,7 @@ FlatAtomicAddU64Vflat::FlatAtomicAddU64Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicAddU64Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1330,6 +1369,7 @@ FlatAtomicSubU64Vflat::FlatAtomicSubU64Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicSubU64Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1368,6 +1408,7 @@ FlatAtomicMinI64Vflat::FlatAtomicMinI64Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicMinI64Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1408,6 +1449,7 @@ FlatAtomicMinU64Vflat::FlatAtomicMinU64Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicMinU64Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1448,6 +1490,7 @@ FlatAtomicMaxI64Vflat::FlatAtomicMaxI64Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicMaxI64Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1488,6 +1531,7 @@ FlatAtomicMaxU64Vflat::FlatAtomicMaxU64Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicMaxU64Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1528,6 +1572,7 @@ FlatAtomicAndB64Vflat::FlatAtomicAndB64Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicAndB64Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1566,6 +1611,7 @@ FlatAtomicOrB64Vflat::FlatAtomicOrB64Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicOrB64Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1604,6 +1650,7 @@ FlatAtomicXorB64Vflat::FlatAtomicXorB64Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicXorB64Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1642,6 +1689,7 @@ FlatAtomicIncU64Vflat::FlatAtomicIncU64Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicIncU64Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1680,6 +1728,7 @@ FlatAtomicDecU64Vflat::FlatAtomicDecU64Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicDecU64Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1718,6 +1767,7 @@ FlatAtomicCondSubU32Vflat::FlatAtomicCondSubU32Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicCondSubU32Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1756,6 +1806,7 @@ FlatAtomicMinNumF32Vflat::FlatAtomicMinNumF32Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicMinNumF32Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1794,6 +1845,7 @@ FlatAtomicMaxNumF32Vflat::FlatAtomicMaxNumF32Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicMaxNumF32Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1832,6 +1884,7 @@ FlatAtomicAddF32Vflat::FlatAtomicAddF32Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicAddF32Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1870,6 +1923,7 @@ FlatAtomicPkAddF16Vflat::FlatAtomicPkAddF16Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicPkAddF16Vflat::execute_impl(amdgpu::Wavefront &wf) {
@@ -1908,6 +1962,7 @@ FlatAtomicPkAddBf16Vflat::FlatAtomicPkAddBf16Vflat(const MachineInst *inst)
   num_src_ = 2;
   num_dst_ = 1;
   flags_ |= MEMORY_OP;
+  flags_ |= EXEC_MASKED;
 }
 
 void FlatAtomicPkAddBf16Vflat::execute_impl(amdgpu::Wavefront &wf) {
