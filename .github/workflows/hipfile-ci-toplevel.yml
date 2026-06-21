@@ -9,6 +9,14 @@ on:
       - '.github/workflows/hipfile-*.yml'
       - '!**/*.md'
       - '!**/*.rst'
+  push:
+    branches: [develop]
+    paths:
+      - 'projects/hipfile/**'
+      - '.github/workflows/hipfile-*.yml'
+      - '!**/*.md'
+      - '!**/*.rst'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -91,13 +99,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Git fetch base ref
+        if: ${{ github.event_name == 'pull_request' }}
         working-directory: rocm-systems
         run: git fetch origin "${GITHUB_BASE_REF}"
       - name: Set CI Flags
         working-directory: rocm-systems/projects/hipfile
         id: ci-flags
+        # Only a pull_request diffs against its base to detect Dockerfile changes
+        # (which build a private, PR-namespaced image to test before merge). On
+        # push/workflow_dispatch the canonical latest-rocm images have already
+        # been (re)published by hipfile-image-update.yml on the triggering merge,
+        # so force changed_dockerfile=0 to reuse them rather than rebuild.
         run: |
-          echo "changed_dockerfile=$(./util/files-changed.sh "origin/${GITHUB_BASE_REF}" HEAD 'projects/hipfile/util/docker/DOCKERFILE.*')" >> "${GITHUB_OUTPUT}"
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            changed_dockerfile="$(./util/files-changed.sh "origin/${GITHUB_BASE_REF}" HEAD 'projects/hipfile/util/docker/DOCKERFILE.*')"
+          else
+            changed_dockerfile=0
+          fi
+          echo "changed_dockerfile=${changed_dockerfile}" >> "${GITHUB_OUTPUT}"
       - name: Sanity-check util script test suites
         # Ensure the util scripts work as expected before using them.
         working-directory: rocm-systems/projects/hipfile
