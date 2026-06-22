@@ -90,7 +90,7 @@ def get_build_in_vars(gpu_series: str) -> dict[str, str]:
 
     if gpu_series.startswith("MI"):
         return build_in_vars["cdna"]
-    elif gpu_series.startswith("NAVI"):
+    elif gpu_series.startswith("NAVI") or gpu_series.startswith("RDNA"):
         return build_in_vars["rdna35"]
     else:
         console_error(
