@@ -426,7 +426,7 @@ def test_calc_dataframe_expressions_empty_returns_assignable_series():
 
 
 # =============================================================================
-# calc_metrics_data + _iter_metric_table_rows tests
+# calc_metrics_data + _iter_metric_tables + _build_metric_frames tests
 # =============================================================================
 
 
@@ -439,7 +439,7 @@ def test_calc_dataframe_expressions_empty_returns_assignable_series():
                 {"Metric": ["Wavefronts"], "Avg": ["expr"]},
                 index=pd.Index(["2.1.0"], name="Metric_ID"),
             ),
-            ["2.1.0"],
+            [201],
             id="metric_table_included",
         ),
         pytest.param(
@@ -448,7 +448,7 @@ def test_calc_dataframe_expressions_empty_returns_assignable_series():
                 {"Channel": [" TCC "], "Avg": ["expr"]},
                 index=pd.Index(["18.1.0"], name="Metric_ID"),
             ),
-            ["18.1.0"],
+            [1801],
             id="channel_table_included",
         ),
         pytest.param(
@@ -468,19 +468,19 @@ def test_calc_dataframe_expressions_empty_returns_assignable_series():
         ),
     ],
 )
-def test_iter_metric_table_rows_table_inclusion(table_id, table_df, expected_ids):
-    """Only metric/channel tables yield rows; other dfs and roofline table 402
+def test_iter_metric_tables_table_inclusion(table_id, table_df, expected_ids):
+    """Only metric/channel tables are yielded; other dfs and roofline table 402
     are skipped (so a config with no metric table yields nothing)."""
     arch_config = schema.ArchConfig()
     arch_config.dfs = {table_id: table_df}
 
-    rows = list(db_analysis._iter_metric_table_rows(arch_config))
+    tables = list(db_analysis._iter_metric_tables(arch_config))
 
-    assert [metric_id for metric_id, _df, _row in rows] == expected_ids
+    assert [yielded_id for yielded_id, _df in tables] == expected_ids
 
 
-def test_iter_metric_table_rows_yields_in_df_order_with_source_frame():
-    """Rows yield in df order, each carrying its own source frame."""
+def test_iter_metric_tables_yields_in_dict_order_with_source_frame():
+    """Tables yield in dict order, each carrying its own source frame."""
     metric_df = pd.DataFrame(
         {"Metric": ["Wavefronts"], "Avg": ["expr"]},
         index=pd.Index(["2.1.0"], name="Metric_ID"),
@@ -496,11 +496,42 @@ def test_iter_metric_table_rows_yields_in_df_order_with_source_frame():
         1801: channel_df,
     }
 
-    rows = list(db_analysis._iter_metric_table_rows(arch_config))
+    tables = list(db_analysis._iter_metric_tables(arch_config))
 
-    assert [metric_id for metric_id, _df, _row in rows] == ["2.1.0", "18.1.0"]
-    assert rows[0][1] is metric_df
-    assert rows[1][1] is channel_df
+    assert [yielded_id for yielded_id, _df in tables] == [201, 1801]
+    assert tables[0][1] is metric_df
+    assert tables[1][1] is channel_df
+
+
+def test_build_metric_frames_expands_value_columns_per_row():
+    """Each metric row expands into one expression row per value column, in
+    table-then-column order."""
+    arch_config = schema.ArchConfig()
+    arch_config.dfs = {
+        201: pd.DataFrame(
+            {
+                "Metric": ["Wavefronts"],
+                "Avg": [" a "],
+                "Max": [" m "],
+                "Unit": ["count"],
+            },
+            index=pd.Index(["2.1.0"], name="Metric_ID"),
+        )
+    }
+    table_names_map = {200: "Wavefront Panel", 201: "Wavefront Table"}
+
+    metrics_info_df, expression_df = db_analysis._build_metric_frames(
+        arch_config, table_names_map
+    )
+
+    assert list(metrics_info_df["metric_id"]) == ["2.1.0"]
+    assert metrics_info_df["name"].iloc[0] == "Wavefronts"
+    # Names come from the table id: panel (200) and sub-table (201).
+    assert metrics_info_df["table_name"].iloc[0] == "Wavefront Panel"
+    assert metrics_info_df["sub_table_name"].iloc[0] == "Wavefront Table"
+    # Metadata columns (e.g. Unit) are excluded; values are stripped.
+    assert list(expression_df["value_name"]) == ["Avg", "Max"]
+    assert list(expression_df["value"]) == ["a", "m"]
 
 
 def test_calc_metrics_data_empty_filter_preserves_schema_and_warns():

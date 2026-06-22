@@ -759,18 +759,93 @@ class db_analysis(OmniAnalyze_Base):
         return new_rows
 
     @staticmethod
-    def _iter_metric_table_rows(
+    def _iter_metric_tables(
         arch_config: schema.ArchConfig,
-    ) -> Iterator[tuple[str, pd.DataFrame, pd.Series]]:
-        """Yield (metric_id, metric_df, row) for each metric-table row (any df
-        with a Metric/Channel column), skipping roofline points (table 402)."""
-        for metric_df_id, metric_df in arch_config.dfs.items():
-            if metric_df_id == 402:
+    ) -> Iterator[tuple[int, pd.DataFrame]]:
+        """Yield (table_id, df) for tables with a Metric/Channel column,
+        skipping the roofline table (402)."""
+        for table_id, metric_df in arch_config.dfs.items():
+            if table_id == 402:
                 continue
             if not set(metric_df.columns).intersection({"Metric", "Channel"}):
                 continue
+            yield table_id, metric_df
+
+    @staticmethod
+    def _build_table_names_map(arch_config: schema.ArchConfig) -> dict[int, str]:
+        """Map each panel and sub-table id to its title (e.g. 201 -> Wavefront)."""
+        table_names_map: dict[int, str] = {}
+        for panel_config in arch_config.panel_configs.values():
+            table_names_map[panel_config["id"]] = panel_config["title"]
+            for source in panel_config["data source"]:
+                table = next(iter(source.values()))
+                table_names_map[table["id"]] = table["title"]
+        return table_names_map
+
+    @staticmethod
+    def _build_metric_frames(
+        arch_config: schema.ArchConfig,
+        table_names_map: dict[int, str],
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+        """Build the (metrics-info, expression) frames for one workload.
+
+        Explicit columns keep the schema when a filter matches no metrics.
+        """
+        non_expression_columns = {
+            "Metric",
+            "Channel",
+            "Unit",
+            "Description",
+            "Type",
+            "Xfer",
+            "Coherency",
+            "Transaction",
+            "Percent of Peak",
+        }
+        metrics_info_rows: list[dict[str, Any]] = []
+        expression_rows: list[dict[str, Any]] = []
+        for table_id, metric_df in db_analysis._iter_metric_tables(arch_config):
+            # These are the same for every row of the table; compute once.
+            value_columns = [
+                column
+                for column in metric_df.columns
+                if column not in non_expression_columns
+            ]
+            table_name = table_names_map[table_id // 100 * 100]
+            sub_table_name = table_names_map[table_id]
             for metric_id, row in metric_df.iterrows():
-                yield metric_id, metric_df, row
+                metrics_info_rows.append({
+                    "name": row.get("Metric") or row["Channel"].strip(),
+                    "metric_id": metric_id,
+                    "description": row.get("Description"),
+                    "unit": row.get("Unit"),
+                    "pct_of_peak": row.get("Percent of Peak") is True,
+                    "table_name": table_name,
+                    "sub_table_name": sub_table_name,
+                })
+                for value_name in value_columns:
+                    expression_rows.append({
+                        "metric_id": metric_id,
+                        "value_name": value_name,
+                        "value": row[value_name].strip(),
+                    })
+        metrics_info_df = pd.DataFrame(
+            data=metrics_info_rows,
+            columns=[
+                "name",
+                "metric_id",
+                "description",
+                "unit",
+                "pct_of_peak",
+                "table_name",
+                "sub_table_name",
+            ],
+        )
+        expression_df = pd.DataFrame(
+            data=expression_rows,
+            columns=["metric_id", "value_name", "value"],
+        )
+        return metrics_info_df, expression_df
 
     def calc_metrics_data(
         self,
@@ -780,72 +855,10 @@ class db_analysis(OmniAnalyze_Base):
 
         for workload_path in self._pmc_df_per_workload.keys():
             gfx_arch = self._runs[workload_path].sys_info.iloc[0]["gpu_arch"]
-            # for example 201 -> Wavefront
-            table_names_map = dict()
-            for panel_config in self._arch_configs[gfx_arch].panel_configs.values():
-                table_names_map[panel_config["id"]] = panel_config["title"]
-                for source in panel_config["data source"]:
-                    table_names_map[list(source.values())[0]["id"]] = list(
-                        source.values()
-                    )[0]["title"]
-            # Build metric data
-            non_expression_columns = [
-                "Metric",
-                "Channel",
-                "Unit",
-                "Description",
-                "Type",
-                "Xfer",
-                "Coherency",
-                "Transaction",
-                "Percent of Peak",
-            ]
-            # Pass explicit columns so an empty result (e.g. a --block filter
-            # matching nothing) still carries the schema downstream relies on.
-            metric_table_rows = list(
-                self._iter_metric_table_rows(self._arch_configs[gfx_arch])
-            )
-            metrics_info_df = pd.DataFrame(
-                data=[
-                    {
-                        "name": row.get("Metric") or row["Channel"].strip(),
-                        "metric_id": metric_id,
-                        "description": row.get("Description"),
-                        "unit": row.get("Unit"),
-                        "pct_of_peak": row.get("Percent of Peak") is True,
-                        "table_name": table_names_map[
-                            int(metric_id.split(".")[0]) * 100
-                        ],
-                        "sub_table_name": table_names_map[
-                            int(metric_id.split(".")[0]) * 100
-                            + int(metric_id.split(".")[1])
-                        ],
-                    }
-                    for metric_id, _metric_df, row in metric_table_rows
-                ],
-                columns=[
-                    "name",
-                    "metric_id",
-                    "description",
-                    "unit",
-                    "pct_of_peak",
-                    "table_name",
-                    "sub_table_name",
-                ],
-            )
-            expression_df = pd.DataFrame(
-                data=[
-                    {
-                        "metric_id": metric_id,
-                        "value_name": value_name,
-                        "value": row[value_name].strip(),
-                    }
-                    for metric_id, metric_df, row in metric_table_rows
-                    for value_name in metric_df.drop(
-                        columns=non_expression_columns, errors="ignore"
-                    ).columns
-                ],
-                columns=["metric_id", "value_name", "value"],
+            arch_config = self._arch_configs[gfx_arch]
+            table_names_map = self._build_table_names_map(arch_config)
+            metrics_info_df, expression_df = self._build_metric_frames(
+                arch_config, table_names_map
             )
 
             if metrics_info_df.empty:
