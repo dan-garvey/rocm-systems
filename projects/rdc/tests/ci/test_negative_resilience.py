@@ -6,12 +6,12 @@ unsupported fields, and unauthorized operations.
 """
 
 import os
-import signal
 import subprocess
 import time
+
 import pytest
 
-from conftest import run_rdci
+from conftest import run_rdci, terminate_process
 
 
 # ---------------------------------------------------------------------------
@@ -113,35 +113,30 @@ class TestDaemonResilience:
         port = 50099
         env = os.environ.copy()
 
-        proc = subprocess.Popen(
-            [rdcd_path, "-u", "-p", str(port)],
-            env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
+        proc = None
         try:
+            proc = subprocess.Popen(
+                [rdcd_path, "-u", "-p", str(port)],
+                env=env,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
             deadline = time.monotonic() + 15
             while time.monotonic() < deadline and not _port_open(port):
                 time.sleep(0.5)
             assert _port_open(port), "rdcd did not start on alternate port"
 
-            proc.send_signal(signal.SIGTERM)
-            proc.wait(timeout=10)
+            terminate_process(proc)
 
             proc = subprocess.Popen(
                 [rdcd_path, "-u", "-p", str(port)],
                 env=env,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
             deadline = time.monotonic() + 15
             while time.monotonic() < deadline and not _port_open(port):
                 time.sleep(0.5)
             assert _port_open(port), "rdcd did not restart successfully"
         finally:
-            proc.send_signal(signal.SIGTERM)
-            try:
-                proc.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                proc.kill()
-                proc.wait()
+            terminate_process(proc)

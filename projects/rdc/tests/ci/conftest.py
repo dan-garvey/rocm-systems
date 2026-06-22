@@ -1,10 +1,11 @@
 """Shared pytest fixtures and helpers for RDC CI tests."""
 
 import os
-import subprocess
 import signal
-import time
 import shutil
+import subprocess
+import time
+
 import pytest
 
 
@@ -61,11 +62,16 @@ def rdctst_path(rocm_dir):
 def has_gpu():
     """Return True if at least one AMD GPU is accessible."""
     try:
-        vendor_path = "/sys/class/drm/card0/device/vendor"
-        if os.path.isfile(vendor_path):
-            with open(vendor_path) as f:
-                if "1002" in f.read():
-                    return True
+        drm_dir = "/sys/class/drm"
+        for entry in os.listdir(drm_dir):
+            suffix = entry.removeprefix("card")
+            if not entry.startswith("card") or not suffix.isdigit():
+                continue
+            vendor_path = os.path.join(drm_dir, entry, "device", "vendor")
+            if os.path.isfile(vendor_path):
+                with open(vendor_path) as f:
+                    if f.read().strip().lower() == "0x1002":
+                        return True
     except Exception:
         pass
     return False
@@ -85,6 +91,25 @@ def _wait_for_port(port, timeout=10):
     return False
 
 
+def terminate_process(proc, timeout=10):
+    """Terminate a child process without masking an earlier test failure."""
+    if proc is None or proc.poll() is not None:
+        return
+    try:
+        proc.send_signal(signal.SIGTERM)
+    except ProcessLookupError:
+        return
+    try:
+        proc.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        if proc.poll() is None:
+            try:
+                proc.kill()
+            except ProcessLookupError:
+                return
+        proc.wait()
+
+
 @pytest.fixture(scope="session")
 def rdcd_server(rdcd_path, has_gpu):
     """Start rdcd in unauthenticated mode for the test session.
@@ -99,32 +124,28 @@ def rdcd_server(rdcd_path, has_gpu):
     proc = subprocess.Popen(
         [rdcd_path, "-u"],  # unauthenticated mode
         env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
 
     if not _wait_for_port(50051, timeout=15):
-        proc.kill()
+        terminate_process(proc)
         pytest.fail("rdcd did not start within 15 s")
 
     yield proc
 
-    # Teardown
-    proc.send_signal(signal.SIGTERM)
-    try:
-        proc.wait(timeout=10)
-    except subprocess.TimeoutExpired:
-        proc.kill()
-        proc.wait()
+    terminate_process(proc)
 
 
 def run_rdci(rdci_path, *args, timeout=30):
     """Run rdci with the given subsystem arguments and return CompletedProcess."""
-    cmd = [rdci_path] + list(args)
-    if len(cmd) > 1:
-        cmd.insert(2, "-u")
-    else:
+    if not args:
+        raise ValueError("an RDC subsystem is required")
+    subsystem, *subsystem_args = args
+    cmd = [rdci_path, subsystem]
+    if "-u" not in subsystem_args and "--unauth" not in subsystem_args:
         cmd.append("-u")
+    cmd.extend(subsystem_args)
     return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
 
 

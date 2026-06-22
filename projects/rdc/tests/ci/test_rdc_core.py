@@ -236,6 +236,7 @@ class TestNegativeCLI:
             timeout=15,
         )
         assert r.returncode != -11, "rdci segfaulted (SIGSEGV)"
+        assert r.returncode != 0, "Should fail when daemon is not running"
 
     def test_stats_no_daemon(self, rdci_path):
         r = subprocess.run(
@@ -245,3 +246,4 @@ class TestNegativeCLI:
             timeout=15,
         )
         assert r.returncode != -11, "rdci segfaulted"
+        assert r.returncode != 0, "Should fail when daemon is not running"

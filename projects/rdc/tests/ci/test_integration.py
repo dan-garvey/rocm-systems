@@ -31,7 +31,8 @@ class TestPrometheusExporter:
             cwd=python_binding_dir,
         )
         combined = (r.stdout + r.stderr).lower()
-        assert "listen_port" in combined or "usage" in combined or r.returncode == 0
+        assert r.returncode == 0, r.stderr
+        assert "listen_port" in combined or "usage" in combined
 
     def test_prometheus_config_valid_json(self, python_binding_dir):
         cfg = os.path.join(python_binding_dir, "prometheus_targets.json")

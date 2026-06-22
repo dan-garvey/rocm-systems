@@ -125,14 +125,12 @@ class TestPythonQuality:
 
 
 # ---------------------------------------------------------------------------
-# Auth flag mismatch
+# RdcReader public surface
 # ---------------------------------------------------------------------------
-class TestPythonAuthMismatch:
-    """Verify auth flag mismatch produces a clear error."""
+class TestPythonBindingSurface:
+    """Verify the public RdcReader constructor is available."""
 
-    def test_reader_without_tls_to_tls_daemon(self, python_binding_dir, has_gpu):
-        if not has_gpu:
-            pytest.skip("No GPU -- skipping auth mismatch test")
+    def test_rdc_reader_is_callable(self, python_binding_dir):
         sys.path.insert(0, python_binding_dir)
         try:
             from RdcReader import RdcReader
