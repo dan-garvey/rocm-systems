@@ -1776,10 +1776,6 @@ class AMDSMIParser(argparse.ArgumentParser):
         throttle_help = (
             "Displays throttle accumulators;\n    Only available for MI300 or newer ASICs and APUs"
         )
-        apu_help = (
-            "Enable APU-specific metrics (per-core power and temperatures,\n"
-            "    fabric/IPU/VPE clocks, DRAM bandwidth, throttle residency)"
-        )
 
         # Help text for Arguments only on Hypervisors
         schedule_help = "All scheduling information"
@@ -1948,9 +1944,6 @@ class AMDSMIParser(argparse.ArgumentParser):
                     action="store_true",
                     required=False,
                     help=argparse.SUPPRESS,
-                )
-                metric_parser.add_argument(
-                    "--apu", action="store_true", required=False, help=apu_help
                 )
 
             # Options to only display to Hypervisors

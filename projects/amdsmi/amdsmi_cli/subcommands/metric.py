@@ -321,7 +321,7 @@ class MetricCommands:
 
         # Detect APU system and check if --apu flag was provided
         is_apu = gpu_metric.get("apu_metrics.temperature_gfx", "N/A") != "N/A"
-        show_apu = is_apu and hasattr(args, "apu") and args.apu
+        show_apu = is_apu
 
         # Workaround for XCP (partition) metrics not providing num_partition in v1.9+/v1.1+
         # Provides original formatting for earlier metric versions
