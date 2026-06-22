@@ -46,6 +46,7 @@
 #include <mutex>
 
 #include "core/inc/runtime.h"
+#include "core/util/utils.h"
 
 #include "core/inc/amd_gpu_agent.h"
 
@@ -210,7 +211,9 @@ hsa_status_t PcsRuntime::PcSamplingSession::HandleSampleData(uint8_t* buf1, size
   // Save and restore previous state to handle nested reentry safely.
   // If data_ready_callback triggers another HandleSampleData on the same thread,
   // the inner call's cleanup won't clobber the outer call's data.
+  // Use RAII guard to ensure restore even if callback throws an exception.
   data_ready_info_t saved_copy = pending_sample_copy;
+  MAKE_SCOPE_GUARD([&]() { pending_sample_copy = saved_copy; });
 
   pending_sample_copy.buf1 = buf1;
   pending_sample_copy.buf1_sz = buf1_sz;
@@ -258,9 +261,8 @@ hsa_status_t PcsRuntime::PcSamplingSession::HandleSampleData(uint8_t* buf1, size
                           &PcSamplingDataCopyCallback,
                           /* hsa_callback_data*/ this);
 
-  // Restore previous thread-local storage state (handles nested reentry correctly).
-  // If this was the outermost call, saved_copy is empty, which catches deferred/off-thread calls.
-  pending_sample_copy = saved_copy;
+  // RAII scope guard restores pending_sample_copy automatically on scope exit,
+  // even if callback threw an exception.
 
   return HSA_STATUS_SUCCESS;
 }
