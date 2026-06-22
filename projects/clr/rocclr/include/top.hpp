@@ -153,6 +153,8 @@ class MemoryPoolObject {
 /*! \brief For all reference counted objects.
  */
 class ReferenceCountedObject {
+  static_assert(sizeof(std::atomic<uint>) < 64,
+                "std::atomic<uint> must be smaller than 64 bytes for cache-line padding");
   alignas(64) std::atomic<uint> referenceCount_;
   char referenceCountPadding_[64 - sizeof(std::atomic<uint>)];
 

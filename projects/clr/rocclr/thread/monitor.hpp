@@ -172,8 +172,8 @@ class alignas(64) Monitor {
   alignas(64) std::condition_variable cv_;
 };
 
-static_assert(alignof(Monitor) == 64,
-              "Monitor must be aligned to a 64-byte cache line so that adjacent "
+static_assert(alignof(Monitor) >= 64,
+              "Monitor must be aligned to at least a 64-byte cache line so that adjacent "
               "Monitors never share a line (false sharing).");
 static_assert(sizeof(Monitor) % 64 == 0,
               "Monitor must occupy a whole number of cache lines so that its hot "
