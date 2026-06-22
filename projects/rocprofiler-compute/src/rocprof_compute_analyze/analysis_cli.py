@@ -8,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 
 from rocprof_compute_analyze.analysis_base import OmniAnalyze_Base
-from roofline.roofline_main import Roofline
+from roofline.roofline_main import ROOFLINE_SUPPORTED, Roofline
 from utils import file_io, parser, schema, tty
 from utils.logger import console_error, console_log, console_warning, demarcate
 from utils.roofline_calc import calc_ai_analyze
@@ -16,6 +16,7 @@ from utils.utils_analysis import (
     build_call_trees,
     build_call_trees_with_kernel_ids,
     build_operator_summary,
+    get_matrix_ops_type,
     process_torch_trace_output,
     write_torch_trace_consolidated_csv,
 )
@@ -60,7 +61,10 @@ class cli_analysis(OmniAnalyze_Base):
         for path_info in args.path:
             workload = self._runs[path_info[0]]
 
-            # PC sampling only -- skip counter collection data loading
+            pc_sampling_data = self.load_pc_sampling_tool_data(path_info[0])
+
+            # No counters collected -- derive scaffolding from the PC sampling
+            # kernel trace and skip metrics calculation.
             if self.pc_sampling_only():
                 console_log(
                     "analysis",
@@ -68,32 +72,9 @@ class cli_analysis(OmniAnalyze_Base):
                     " available, metrics calculation will be"
                     " skipped",
                 )
-
-                pc_sampling_data = file_io.load_pc_sampling_results(path_info[0])
-
-                workload.raw_pmc = file_io.process_pc_sampling_kernel_trace(
-                    pc_sampling_data
+                self.build_pc_sampling_only_workload(
+                    workload, path_info[0], args, pc_sampling_data
                 )
-                workload.raw_pmc = workload.raw_pmc.rename(
-                    columns={"Dispatch_Id": "Dispatch_ID"}
-                )
-
-                kernel_top_df, dispatch_info_df = file_io.create_df_kernel_top_stats(
-                    df_in=workload.raw_pmc,
-                    raw_data_dir=path_info[0],
-                    filter_gpu_ids=workload.filter_gpu_ids,
-                    filter_dispatch_ids=workload.filter_dispatch_ids,
-                    filter_nodes=workload.filter_nodes,
-                    time_unit=args.time_unit,
-                    kernel_verbose=args.kernel_verbose,
-                )
-                workload.dfs[parser.PMC_KERNEL_TOP_TABLE_ID] = kernel_top_df
-                workload.dfs[parser.PMC_DISPATCH_INFO_TABLE_ID] = dispatch_info_df
-
-                parser.load_non_mertrics_table(
-                    workload, path_info[0], args, pc_sampling_tool_data=pc_sampling_data
-                )
-                parser.nullify_unevaluated_metric_values(workload)
                 continue
 
             # create 'mega dataframe'
@@ -157,6 +138,7 @@ class cli_analysis(OmniAnalyze_Base):
                 is_gui=False,
                 args=args,
                 dfs_expressions=self._arch_configs[gpu_arch].dfs_expressions,
+                pc_sampling_tool_data=pc_sampling_data,
             )
 
     @demarcate
@@ -186,7 +168,7 @@ class cli_analysis(OmniAnalyze_Base):
 
             # Generate roofline plot for single-path, compatible architectures
             if (len(args.path)) == 1:
-                if gpu_arch in ["gfx90a", "gfx940", "gfx941", "gfx942", "gfx950"]:
+                if gpu_arch in ROOFLINE_SUPPORTED:
                     is_roofline_valid, roofline_error_msg = validate_roofline_csv(
                         Path(workload_path)
                     )
@@ -199,13 +181,6 @@ class cli_analysis(OmniAnalyze_Base):
                         )
                     if is_roofline_valid:
                         soc_obj = soc[gpu_arch]
-                        # Normalize user-facing "vL1D" to CSV column name "L1"
-                        mem_level = (
-                            args.mem_level
-                            if isinstance(args.mem_level, list)
-                            else [args.mem_level]
-                        )
-                        mem_level = [("L1" if m == "vL1D" else m) for m in mem_level]
 
                         roof_obj = Roofline(
                             args=soc_obj.get_args(),
@@ -213,13 +188,16 @@ class cli_analysis(OmniAnalyze_Base):
                             run_parameters={
                                 "workload_dir": workload_path,
                                 "device_id": 0,
+                                "gpu_arch": gpu_arch,
                                 "sort_type": str(args.sort),
-                                "mem_level": mem_level,
-                                "is_standalone": True,
+                                "mem_level": args.mem_level,
                                 "roofline_data_type": args.roofline_data_type,
                                 "kernel_filter": bool(args.gpu_kernel),
                                 "iteration_multiplexing": self._profiling_config.get(
                                     "iteration_multiplexing"
+                                ),
+                                "matrix_ops_type": get_matrix_ops_type(
+                                    workload.sys_info.iloc[0]["gpu_series"]
                                 ),
                             },
                         )
