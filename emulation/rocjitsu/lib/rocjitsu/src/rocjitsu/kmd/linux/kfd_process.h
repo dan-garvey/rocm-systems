@@ -15,6 +15,7 @@
 #include "rocjitsu/kmd/linux/events.h"
 #include "rocjitsu/vm/amdgpu/mtype.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <cstdio>
 #include <mutex>
@@ -127,11 +128,37 @@ public:
     bool writable = false;
   };
 
-  static HostPageAccess host_page_access(const void *ptr) {
-    const auto page = reinterpret_cast<uintptr_t>(ptr) & ~(kPageSize - 1);
+  struct HostMappingRange {
+    uintptr_t start = 0;
+    uintptr_t end = 0;
+    HostPageAccess access;
+  };
+
+  struct HostMappingsSnapshot {
+    std::vector<HostMappingRange> ranges;
+
+    HostPageAccess access_for(const void *ptr) const {
+      const auto page = reinterpret_cast<uintptr_t>(ptr) & ~(kPageSize - 1);
+      const uintptr_t page_end = page + kPageSize;
+      if (page_end < page)
+        return {};
+      auto it = std::upper_bound(
+          ranges.begin(), ranges.end(), page,
+          [](uintptr_t value, const HostMappingRange &range) { return value < range.start; });
+      if (it == ranges.begin())
+        return {};
+      --it;
+      if (page >= it->start && page_end <= it->end)
+        return it->access;
+      return {};
+    }
+  };
+
+  static HostMappingsSnapshot read_host_mappings() {
+    HostMappingsSnapshot snapshot;
     FILE *maps = std::fopen("/proc/self/maps", "re");
     if (!maps)
-      return {};
+      return snapshot;
 
     char line[512];
     while (std::fgets(line, sizeof(line), maps)) {
@@ -140,13 +167,35 @@ public:
       char perms[5] = {};
       if (std::sscanf(line, "%llx-%llx %4s", &start, &end, perms) != 3)
         continue;
-      if (page >= start && page + kPageSize <= end) {
-        std::fclose(maps);
-        return {.readable = perms[0] == 'r', .writable = perms[1] == 'w'};
-      }
+      if (end <= start)
+        continue;
+      snapshot.ranges.push_back({static_cast<uintptr_t>(start),
+                                 static_cast<uintptr_t>(end),
+                                 {.readable = perms[0] == 'r', .writable = perms[1] == 'w'}});
     }
     std::fclose(maps);
-    return {};
+    std::sort(
+        snapshot.ranges.begin(), snapshot.ranges.end(),
+        [](const HostMappingRange &a, const HostMappingRange &b) { return a.start < b.start; });
+    return snapshot;
+  }
+
+  static HostPageAccess host_page_access(const void *ptr) {
+    const auto page = reinterpret_cast<uintptr_t>(ptr) & ~(kPageSize - 1);
+    static std::mutex cache_mutex;
+    static std::unordered_map<uintptr_t, HostPageAccess> cache;
+    {
+      std::lock_guard lock(cache_mutex);
+      if (auto it = cache.find(page); it != cache.end())
+        return it->second;
+    }
+
+    const HostPageAccess access = read_host_mappings().access_for(ptr);
+    if (access.readable || access.writable) {
+      std::lock_guard lock(cache_mutex);
+      cache.emplace(page, access);
+    }
+    return access;
   }
 
   static bool host_page_mapped(const void *ptr) { return host_page_access(ptr).readable; }
@@ -161,11 +210,12 @@ public:
     auto *base = static_cast<uint8_t *>(host_ptr);
     const uint64_t first_page = gpu_va & ~(kPageSize - 1);
     const uint64_t end_va = gpu_va + size;
+    const HostMappingsSnapshot host_mappings = read_host_mappings();
     for (uint64_t page_va = first_page; page_va < end_va; page_va += kPageSize) {
       auto *translation_base =
           reinterpret_cast<uint8_t *>(reinterpret_cast<uintptr_t>(base) + page_va - gpu_va);
       const uint64_t access_va = page_va < gpu_va ? gpu_va : page_va;
-      const HostPageAccess access = host_page_access(base + (access_va - gpu_va));
+      const HostPageAccess access = host_mappings.access_for(base + (access_va - gpu_va));
       page_table_[page_va >> kPageShift] = {translation_base, mtype, access.readable,
                                             access.writable};
     }

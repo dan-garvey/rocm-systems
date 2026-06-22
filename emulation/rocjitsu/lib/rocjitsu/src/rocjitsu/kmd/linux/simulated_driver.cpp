@@ -1402,8 +1402,9 @@ int SimulatedDriver::import_dmabuf_ioctl(KfdProcess &proc, void *arg) {
 
   auto *host_ptr = safe_mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, dupfd, 0);
   if (host_ptr == MAP_FAILED) {
+    const int saved_errno = errno;
     syscall(SYS_close, dupfd);
-    return -ENOMEM;
+    return -saved_errno;
   }
 
   uint64_t handle;
